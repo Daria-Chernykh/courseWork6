@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Уведомления</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <div class="header mb-3">
+                <h1>Уведомления о неисправностях</h1>
+            </div>
+            
+            <div class="notifications-container">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Оборудование</th>
+                            <th>Дата обнаружения</th>
+                            <th>Состояние</th>
+                            <th>Примечание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notifications %}
+                        <tr data-bs-toggle="selection" 
+                            data-notification-id="{{ n.id }}"
+                            data-equipment-id="{{ n.equipment.id }}"
+                            data-equipment-name="{{ n.equipment.name }}"
+                            data-state-id="{{ n.state.id }}">
+                            <td>{{ n.id }}</td>
+                            <td>{{ n.equipment.name }}</td>
+                            <td>{{ n.issue_date.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ n.state.value }}</td>
+                            <td>{{ n.description or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="buttons-container">
+                    <button id="editNotificationBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#editNotificationModal" disabled>
+                        Редактировать уведомление
+                    </button>
+                    <button id="closeNotificationBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#closeNotificationModal" disabled>
+                        Закрыть уведомление
+                    </button>
+                </div>
+                <div class="close-btn-container">
+                    <button class="action-btn btn close-btn" onclick="window.location.href='/home'">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования уведомления -->
+    <form method="post" class="modal fade" id="editNotificationModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Редактировать уведомление</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="col-form-label">Оборудование</label>
+              <input type="text" class="form-control" id="edit-notification-equipment" readonly>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Дата обнаружения</label>
+              <input type="text" class="form-control" id="edit-notification-date" readonly>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Состояние</label>
+              <select class="form-control" id="edit-notification-state" name="state_id" required>
+                {% for state in states if state.value in ['Требуется техническое обслуживание', 'В ремонте'] %}
+                <option value="{{ state.id }}">{{ state.value }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Примечание</label>
+              <textarea class="form-control" id="edit-notification-description" name="description" rows="3"></textarea>
+            </div>
+            <input type="hidden" name="notification_id" id="edit-notification-id">
+            <input type="hidden" name="equipment_id" id="edit-equipment-id">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary" formaction="/notification/update">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Модальное окно закрытия уведомления -->
+    <div class="modal fade" id="closeNotificationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Закрыть уведомление</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы действительно хотите закрыть уведомление для оборудования "<strong id="modalEquipmentName"></strong>"?</p>
+                    <p class="text-muted">Оборудование будет переведено в состояние "Работает".</p>
+                </div>
+                <div class="modal-footer">
+                    <form method="POST" action="/notification/close">
+                        <input type="hidden" name="notification_id" id="close-notification-id">
+                        <input type="hidden" name="equipment_id" id="close-equipment-id">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Закрыть</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Функция для сброса выделения строк
+        function resetSelection() {
+            document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+                row.classList.remove('selected');
+            });
+            
+            // Деактивируем кнопки действий
+            document.getElementById('editNotificationBtn').disabled = true;
+            document.getElementById('closeNotificationBtn').disabled = true;
+        }
+
+        // Обработчик выбора строки
+        document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+            row.addEventListener('click', function() {
+                // Если строка уже выделена - снимаем выделение
+                if (this.classList.contains('selected')) {
+                    resetSelection();
+                    return;
+                }
+                
+                // Снимаем выделение со всех строк
+                resetSelection();
+                
+                // Выделяем текущую строку
+                this.classList.add('selected');
+                
+                // Активируем кнопки действий
+                document.getElementById('editNotificationBtn').disabled = false;
+                document.getElementById('closeNotificationBtn').disabled = false;
+                
+                // Сохраняем данные выбранного уведомления
+                const notificationId = this.dataset.notificationId;
+                const equipmentId = this.dataset.equipmentId;
+                const equipmentName = this.dataset.equipmentName;
+                const issueDate = this.cells[2].textContent;
+                const stateId = this.dataset.stateId;
+                const description = this.cells[4].textContent;
+                
+                // Для окна редактирования
+                document.getElementById('edit-notification-id').value = notificationId;
+                document.getElementById('edit-equipment-id').value = equipmentId;
+                document.getElementById('edit-notification-equipment').value = equipmentName;
+                document.getElementById('edit-notification-date').value = issueDate;
+                document.getElementById('edit-notification-state').value = stateId;
+                document.getElementById('edit-notification-description').value = description === '-' ? '' : description;
+                
+                // Для окна закрытия
+                document.getElementById('close-notification-id').value = notificationId;
+                document.getElementById('close-equipment-id').value = equipmentId;
+                document.getElementById('modalEquipmentName').textContent = equipmentName;
+            });
+        });
+        
+        // Обработчики закрытия модальных окон
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('hidden.bs.modal', function() {
+                // Сбрасываем выделение строки при закрытии любой формы
+                resetSelection();
+                
+                // Сбрасываем фокус
+                document.activeElement.blur();
+            });
+        });
+
+        // Очистка формы редактирования при закрытии
+        document.getElementById('editNotificationModal').addEventListener('hidden.bs.modal', function() {
+            // Сбрасываем только поля формы редактирования
+            document.getElementById('edit-notification-description').value = '';
+        });
+
+        // Инициализация при загрузке страницы
+        document.addEventListener("DOMContentLoaded", function() {
+            // Сбрасываем выделение строк и деактивируем кнопки
+            resetSelection();
+            
+            // Убедимся, что все кнопки действий отключены
+            ['editNotificationBtn', 'closeNotificationBtn'].forEach(btnId => {
+                document.getElementById(btnId).disabled = true;
+            });
+        });
+    </script>
+</body>
+</html>

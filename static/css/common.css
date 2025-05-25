@@ -1,0 +1,231 @@
+/* === Общие стили === */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f7fdfd;
+}
+
+/* === Контейнеры === */
+.main-container, .login-container {
+    background-color: #ffffff;
+    border: 2px solid #166573;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(19, 165, 155, 0.4);
+}
+
+.main-container {
+    padding: 20px;
+    width: 1000px;
+    margin: 20px auto;
+}
+
+.home-container {
+    width: 500px;
+}
+
+.login-container {
+    padding: 30px;
+    width: 350px;
+}
+
+.buttons-container {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.buttons-container .btn {
+    flex: 1;
+    min-width: fit-content;
+}
+
+.close-btn-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.button-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* === Заголовки === */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header h1, .header h3 {
+    margin: 0;
+    color: #166573;
+}
+
+.header h1 {
+    font-size: 20px;
+}
+
+.header h3 {
+    margin-right: 10%;
+    font-size: 18px;
+}
+
+.login-container h4 {
+    color: #166573;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* === Кнопки === */
+.action-btn, .btn-secondary {
+    background-color: #ffffff;
+    color: #166573;
+    border: 1px solid #166573;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+}
+
+.action-btn:hover {
+    background-color: #13a59b;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(19, 165, 155, 0.6);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.btn-primary {
+    background-color: #166573;
+    border: 1px solid #166573;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: #13a59b;
+    border-color: #13a59b;
+}
+
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #13a59b !important;
+    border-color: #13a59b !important;
+    box-shadow: none !important;
+    color: #fff !important;
+}
+
+.btn-secondary:hover {
+    background-color: #f0f8f8;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus,
+.btn.focus,
+.btn:active.focus,
+.btn.active.focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #166573 !important;
+}
+
+.btn-outline-danger:focus,
+.btn-outline-danger:active,
+.btn-outline-danger.active {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    box-shadow: none !important;
+    color: #fff !important;
+}
+
+.btn-primary:focus:invalid,
+.btn-primary.is-invalid:focus {
+    background-color: #166573 !important;
+    border-color: #166573 !important;
+    box-shadow: none !important;
+    color: #fff !important;
+}
+
+/* === Таблицы === */
+.table th, #productTable th {
+    background-color: #f0f8f8;
+    color: #166573;
+}
+
+tr.selected {
+    background-color: rgba(19, 165, 155, 0.1) !important;
+}
+
+.delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+tr:hover .delete-btn,
+tr.selected .delete-btn {
+    opacity: 1;
+}
+
+/* === Формы === */
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-control:focus,
+.form-select:focus,
+select.form-select:focus,
+select.form-control:focus {
+    border-color: #13a59b;
+    box-shadow: 0 0 0 0.25rem rgba(19, 165, 155, 0.25);
+}
+
+select.form-select,
+select.form-control {
+    background-color: #ffffff;
+    border: 1px solid #166573;
+    color: #166573;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.invalid-feedback {
+    display: none;
+    color: red;
+    font-size: 0.875em;
+}
+
+.form-control.is-invalid + .invalid-feedback {
+    display: block;
+}
+
+/* === Модальные окна === */
+.modal-content {
+    border: 2px solid #166573;
+    border-radius: 8px;
+}
+
+.modal-header {
+    background-color: #f0f8f8;
+    color: #166573;
+    border-bottom: 1px solid #166573;
+    border-radius: 6px 6px 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #166573;
+}

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Пользователи</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <div class="header mb-3">
+                <h1>Пользователи</h1>
+            </div>
+            
+            <div class="users-container">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Логин</th>
+                            <th>Имя</th>
+                            <th>Роль</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr data-bs-toggle="selection" data-user-id="{{ u.id }}" data-user-login="{{ u.login }}">
+                            <td>{{ u.id }}</td>
+                            <td>{{ u.login }}</td>
+                            <td>{{ u.name }}</td>
+                            <td>{{ u.role.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="buttons-container">
+                    <button class="action-btn btn" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        Добавление пользователя
+                    </button>
+                    <button id="changePasswordBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#changePasswordModal" disabled>
+                        Смена пароля
+                    </button>
+                    <button id="deleteUserBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" disabled>
+                        Удаление пользователя
+                    </button>
+                </div>
+                <div class="close-btn-container">
+                    <button class="action-btn btn close-btn" onclick="window.location.href='/home'">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления пользователя -->
+    <form method="post" class="modal fade" id="addUserModal" tabindex="-1" novalidate>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Добавить пользователя</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="col-form-label">Логин</label>
+              <input type="text" class="form-control" name="login" id="loginInput" required>
+              <div class="invalid-feedback" id="loginFeedback">Поле "Логин" не может быть пустым</div>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Пароль</label>
+              <input type="password" class="form-control" name="password" id="passwordInput" required minlength="4">
+              <div class="invalid-feedback">Пароль должен содержать минимум 4 символа</div>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Имя</label>
+              <input type="text" class="form-control" name="name" id="nameInput" required>
+              <div class="invalid-feedback">Поле "Имя" не может быть пустым</div>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Роль</label>
+              <select class="form-control" name="role_id" required>
+                {% for role in roles %}
+                <option value="{{ role.id }}">{{ role.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              Добавить
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Модальное окно смены пароля -->
+    <form method="post" class="modal fade" id="changePasswordModal" tabindex="-1" novalidate>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Смена пароля</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="col-form-label">Логин</label>
+              <input type="text" class="form-control" id="password-user-login" readonly>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Новый пароль</label>
+              <input type="password" class="form-control" name="new_password" id="newPasswordInput" required minlength="4">
+              <div class="invalid-feedback">Пароль должен содержать минимум 4 символа</div>
+            </div>
+            <input type="hidden" name="user_id" id="password-user-id">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary">Изменить</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удалить пользователя</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы действительно хотите удалить пользователя "<strong id="modalUserName"></strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <form method="POST" action="/user/delete">
+                        <input type="hidden" name="id" id="modalUserId">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Удалить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Глобальная переменная для хранения выбранной строки
+        let selectedRow = null;
+
+        // Функция для сброса выделения строки
+        function resetSelection() {
+            if (selectedRow) {
+                selectedRow.classList.remove('selected');
+                selectedRow = null;
+            }
+            document.getElementById('changePasswordBtn').disabled = true;
+            document.getElementById('deleteUserBtn').disabled = true;
+        }
+
+        // Функция для очистки формы добавления пользователя
+        function resetAddUserForm() {
+            document.getElementById('loginInput').value = '';
+            document.getElementById('loginInput').classList.remove('is-invalid');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').classList.remove('is-invalid');
+            document.getElementById('nameInput').value = '';
+            document.getElementById('nameInput').classList.remove('is-invalid');
+            document.getElementById('loginFeedback').style.display = 'none';
+        }
+
+        // Обработчик выбора строки таблицы
+        document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+            row.addEventListener('click', function() {
+                // Если кликнули на уже выделенную строку - снимаем выделение
+                if (this === selectedRow) {
+                    resetSelection();
+                    return;
+                }
+                
+                // Снимаем выделение со всех строк
+                document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(r => {
+                    r.classList.remove('selected');
+                });
+                
+                // Выделяем текущую строку
+                this.classList.add('selected');
+                selectedRow = this;
+                
+                // Активируем кнопки действий
+                document.getElementById('changePasswordBtn').disabled = false;
+                document.getElementById('deleteUserBtn').disabled = false;
+                
+                // Обновляем данные в модальных окнах
+                const userId = this.dataset.userId;
+                const userLogin = this.dataset.userLogin;
+                
+                document.getElementById('modalUserName').textContent = userLogin;
+                document.getElementById('modalUserId').value = userId;
+                document.getElementById('password-user-id').value = userId;
+                document.getElementById('password-user-login').value = userLogin;
+            });
+        });
+
+        // Инициализация при загрузке страницы
+        document.addEventListener("DOMContentLoaded", function() {
+            // Отключаем кнопки действий при загрузке
+            document.getElementById('changePasswordBtn').disabled = true;
+            document.getElementById('deleteUserBtn').disabled = true;
+            
+            // Очищаем форму добавления пользователя
+            resetAddUserForm();
+            
+            // Обработчики закрытия модальных окон
+            document.getElementById('addUserModal').addEventListener('hidden.bs.modal', function() {
+                resetAddUserForm();
+                resetSelection();
+            });
+            
+            document.getElementById('changePasswordModal').addEventListener('hidden.bs.modal', function() {
+                resetSelection();
+            });
+            
+            document.getElementById('confirmDeleteModal').addEventListener('hidden.bs.modal', function() {
+                resetSelection();
+            });
+            
+            // Обработчик кнопки закрытия в модальном окне добавления
+            document.querySelector('#addUserModal .btn-secondary').addEventListener('click', function() {
+                resetAddUserForm();
+                resetSelection();
+            });
+            
+            // Обработчики для кнопок закрытия в других модальных окнах
+            document.querySelectorAll('.modal .btn-secondary').forEach(btn => {
+                btn.addEventListener('click', resetSelection);
+            });
+            
+            // Элементы формы добавления пользователя
+            const addUserForm = document.getElementById('addUserModal');
+            const loginInput = document.getElementById('loginInput');
+            const passwordInput = document.getElementById('passwordInput');
+            const nameInput = document.getElementById('nameInput');
+            const loginFeedback = document.getElementById('loginFeedback');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Элементы формы смены пароля
+            const changePasswordForm = document.getElementById('changePasswordModal');
+            const newPasswordInput = document.getElementById('newPasswordInput');
+
+            // Список всех логинов для проверки уникальности
+            const existingLogins = Array.from(document.querySelectorAll('tr[data-user-login]'))
+                .map(tr => tr.dataset.userLogin.toLowerCase());
+
+            // Проверка уникальности логина (клиентская проверка)
+            function isLoginUnique(login) {
+                return !existingLogins.includes(login.toLowerCase());
+            }
+
+            // Валидация поля логина
+            async function validateLogin() {
+                const login = loginInput.value.trim();
+                
+                if (!login) {
+                    loginInput.classList.add('is-invalid');
+                    loginFeedback.textContent = 'Поле "Логин" не может быть пустым';
+                    return false;
+                }
+                
+                if (!isLoginUnique(login)) {
+                    loginInput.classList.add('is-invalid');
+                    loginFeedback.textContent = 'Этот логин уже занят';
+                    return false;
+                }
+                
+                loginInput.classList.remove('is-invalid');
+                return true;
+            }
+
+            // Валидация поля пароля
+            function validatePassword() {
+                const password = passwordInput.value.trim();
+                
+                if (!password) {
+                    passwordInput.classList.add('is-invalid');
+                    return false;
+                }
+                
+                if (password.length < 4) {
+                    passwordInput.classList.add('is-invalid');
+                    return false;
+                }
+                
+                passwordInput.classList.remove('is-invalid');
+                return true;
+            }
+
+            // Валидация поля имени
+            function validateName() {
+                const name = nameInput.value.trim();
+                
+                if (!name) {
+                    nameInput.classList.add('is-invalid');
+                    return false;
+                }
+                
+                nameInput.classList.remove('is-invalid');
+                return true;
+            }
+
+            // Валидация нового пароля
+            function validateNewPassword() {
+                const password = newPasswordInput.value.trim();
+                
+                if (!password) {
+                    newPasswordInput.classList.add('is-invalid');
+                    return false;
+                }
+                
+                if (password.length < 4) {
+                    newPasswordInput.classList.add('is-invalid');
+                    return false;
+                }
+                
+                newPasswordInput.classList.remove('is-invalid');
+                return true;
+            }
+
+            // Обработчики событий для формы добавления
+            loginInput.addEventListener('blur', validateLogin);
+            passwordInput.addEventListener('blur', validatePassword);
+            nameInput.addEventListener('blur', validateName);
+
+            // Обработчик события для формы смены пароля
+            newPasswordInput.addEventListener('blur', validateNewPassword);
+
+            // Обработчик отправки формы добавления пользователя
+            addUserForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                submitBtn.disabled = true;
+                
+                const isLoginValid = await validateLogin();
+                const isPasswordValid = validatePassword();
+                const isNameValid = validateName();
+                
+                if (isLoginValid && isPasswordValid && isNameValid) {
+                    this.submit();
+                } else {
+                    submitBtn.disabled = false;
+                    
+                    // Прокрутка к первой ошибке
+                    const firstInvalid = this.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+                }
+            });
+
+            // Обработчик отправки формы смены пароля
+            changePasswordForm.addEventListener('submit', function(e) {
+                if (!validateNewPassword()) {
+                    e.preventDefault();
+                    newPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    newPasswordInput.focus();
+                }
+            });
+
+            // Сброс ошибки при изменении логина
+            loginInput.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            // Сброс ошибки при изменении пароля
+            passwordInput.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            // Сброс ошибки при изменении имени
+            nameInput.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            // Сброс ошибки при изменении нового пароля
+            newPasswordInput.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            // Инициализация кнопки смены пароля
+            document.getElementById('changePasswordBtn').addEventListener('click', function() {
+                if (selectedRow) {
+                    const userId = selectedRow.dataset.userId;
+                    const userLogin = selectedRow.dataset.userLogin;
+                    
+                    document.getElementById('password-user-id').value = userId;
+                    document.getElementById('password-user-login').value = userLogin;
+                }
+            });
+
+            // Инициализация кнопки удаления
+            document.getElementById('deleteUserBtn').addEventListener('click', function() {
+                if (selectedRow) {
+                    const userId = selectedRow.dataset.userId;
+                    const userLogin = selectedRow.dataset.userLogin;
+                    
+                    document.getElementById('modalUserName').textContent = userLogin;
+                    document.getElementById('modalUserId').value = userId;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container home-container">
+        <div class="header">
+            <h3>Добро пожаловать, {{ name }} ({{ role }})</h3>
+            <a href="{{ url_for('logout') }}" class="btn action-btn">Выход</a>
+        </div>
+        <div class="button-list">
+            {% if "Оборудование" in buttons %}
+            <a href="/equipments" class="btn btn-primary w-100">Оборудование</a>
+            {% endif %}
+            {% if "Пользователи" in buttons %}
+            <a href="/users" class="btn btn-primary w-100">Пользователи</a>
+            {% endif %}
+            {% if "Текущие заказы" in buttons %}
+            <a href="/orders" class="btn btn-primary w-100">Текущие заказы</a>
+            {% endif %}
+            {% if "Архив заказов" in buttons %}
+            <a href="/archive" class="btn btn-primary w-100">Архив заказов</a>
+            {% endif %}
+            {% if "Уведомления" in buttons %}
+            <a href="/notifications" class="btn btn-primary w-100">Уведомления о неисправностях</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

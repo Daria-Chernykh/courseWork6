@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Оборудование</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <div class="header mb-3">
+                <h1>Оборудование</h1>
+            </div>
+            
+            <div class="equipment-container">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Оборудование</th>
+                            <th>Состояние</th>
+                            <th>Дата последнего обслуживания</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in equipments %}
+                        <tr data-bs-toggle="selection" data-equipment-id="{{ e.id }}" data-equipment-name="{{ e.name }}">
+                            <td>{{ e.id }}</td>
+                            <td>{{ e.name }}</td>
+                            <td>{{ e.state.value }}</td>
+                            <td>{{ e.last_service_date or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="buttons-container">
+                    <button class="action-btn btn" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+                        Добавление оборудования
+                    </button>
+                    <button id="editEquipmentBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#editEquipmentModal" disabled>
+                        Редактирование оборудования
+                    </button>
+                    <button id="deleteEquipmentBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" disabled>
+                        Удаление оборудования
+                    </button>
+                    <button id="faultNotificationBtn" class="action-btn btn" data-bs-toggle="modal" data-bs-target="#faultNotificationModal" disabled>
+                        Уведомление о неисправности
+                    </button>
+                </div>
+                <div class="close-btn-container">
+                    <button class="action-btn btn close-btn" onclick="window.location.href='/home'">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="modal fade" id="addEquipmentModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Добавить оборудование</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+                <label for="equipment-name" class="col-form-label">Название</label>
+                <input type="text" class="form-control" id="equipment-name" name="equipment-name">
+                <div class="invalid-feedback">Название не может быть пустым</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary">Добавить</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <form method="post" class="modal fade" id="editEquipmentModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Редактировать оборудование</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="col-form-label">ID</label>
+              <input type="text" class="form-control" id="edit-equipment-id" name="edit-equipment-id" readonly>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">Название</label>
+                <input type="text" class="form-control" id="edit-equipment-name" name="edit-equipment-name" required>
+                <div class="invalid-feedback">Название не может быть пустым</div>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Состояние</label>
+              <input type="text" class="form-control" id="edit-equipment-state" readonly>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Дата последнего обслуживания</label>
+              <input type="date" class="form-control" id="edit-equipment-date" name="edit-equipment-date">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удалить оборудование</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы действительно хотите удалить оборудование "<strong id="modalEquipmentName"></strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <form method="POST" action="/equipment/delete">
+                        <input type="hidden" name="id" id="modalEquipmentId">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Удалить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="modal fade" id="faultNotificationModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Уведомление о неисправности</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="col-form-label">№ оборудования</label>
+              <input type="text" class="form-control" id="fault-equipment-id" name="fault-equipment-id" readonly>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Оборудование</label>
+              <input type="text" class="form-control" id="fault-equipment-name" readonly>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">Дата обнаружения неисправности</label>
+                <input type="date" class="form-control" id="fault-detection-date" name="fault-detection-date" required>
+                <div class="invalid-feedback">Дата не может быть раньше последнего обслуживания</div>
+            </div>
+            <div class="form-group">
+              <label class="col-form-label">Описание проблемы</label>
+              <textarea class="form-control" id="fault-description" name="fault-description" rows="3" required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+          </div>
+        </div>
+      </div>
+    </form>
+<script src="static/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Очистка формы при загрузке страницы
+    window.addEventListener('load', function() {
+        document.getElementById('equipment-name').value = '';
+        document.getElementById('equipment-name').classList.remove('is-invalid');
+    });
+
+    // Общая функция для сброса выбора
+    function resetSelection() {
+        document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+            row.classList.remove('selected');
+        });
+        
+        // Отключаем все кнопки действий
+        ['editEquipmentBtn', 'deleteEquipmentBtn', 'faultNotificationBtn'].forEach(id => {
+            document.getElementById(id).disabled = true;
+        });
+    }
+
+    // Обработчик выбора строки 
+    document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+        row.addEventListener('click', function() {
+            // Если строка уже выделена - снимаем выделение
+            if (this.classList.contains('selected')) {
+                resetSelection();
+                return;
+            }
+            
+            // Снимаем выделение со всех строк
+            document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(r => {
+                r.classList.remove('selected');
+            });
+            
+            // Выделяем текущую строку
+            this.classList.add('selected');
+            
+            // Активируем кнопки действий
+            document.getElementById('deleteEquipmentBtn').disabled = false;
+            document.getElementById('editEquipmentBtn').disabled = false;
+            document.getElementById('faultNotificationBtn').disabled = false;
+            
+            // Сохраняем данные выбранного оборудования
+            const equipmentId = this.dataset.equipmentId;
+            const equipmentName = this.dataset.equipmentName;
+            const equipmentState = this.cells[2].textContent;
+            const equipmentDate = this.cells[3].textContent;
+            
+            // Обновляем данные в модальных окнах
+            document.getElementById('modalEquipmentName').textContent = equipmentName;
+            document.getElementById('modalEquipmentId').value = equipmentId;
+            
+            // Для окна редактирования
+            document.getElementById('edit-equipment-id').value = equipmentId;
+            document.getElementById('edit-equipment-name').value = equipmentName;
+            document.getElementById('edit-equipment-state').value = equipmentState;
+            document.getElementById('edit-equipment-date').value = equipmentDate.includes('-') ? equipmentDate : '';
+            
+            // Для окна уведомления о неисправности
+            document.getElementById('fault-equipment-id').value = equipmentId;
+            document.getElementById('fault-equipment-name').value = equipmentName;
+            document.getElementById('fault-detection-date').value = new Date().toISOString().split('T')[0];
+        });
+    });
+    
+    // Обработчики для кнопок действий
+    document.getElementById('faultNotificationBtn').addEventListener('click', function() {
+        const selectedRow = document.querySelector('tr.selected');
+        if (selectedRow) {
+            document.getElementById('fault-description').value = '';
+        }
+    });
+    
+    document.getElementById('deleteEquipmentBtn').addEventListener('click', function() {
+        const selectedRow = document.querySelector('tr.selected');
+        if (selectedRow) {
+            const equipmentName = selectedRow.dataset.equipmentName;
+            document.getElementById('modalEquipmentName').textContent = equipmentName;
+        }
+    });
+    
+    // Обработчики закрытия модальных окон
+    document.getElementById('addEquipmentModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('equipment-name').value = '';
+        document.getElementById('equipment-name').classList.remove('is-invalid');
+    });
+    
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            resetSelection();
+            document.activeElement.blur();
+        });
+    });
+    
+    // Валидация форм
+    document.addEventListener("DOMContentLoaded", function () {
+        const nameInputs = ['equipment-name', 'edit-equipment-name'].map(id => document.getElementById(id));
+        const dateInput = document.getElementById('fault-detection-date');
+        const descriptionInput = document.getElementById('fault-description');
+        
+        function validateInput(input, eventType) {
+            const isEmpty = !input.value.trim();
+            if (isEmpty) {
+                input.classList.add('is-invalid');
+                if (eventType === 'submit') {
+                    event.preventDefault();
+                }
+                return false;
+            } else {
+                input.classList.remove('is-invalid');
+                return true;
+            }
+        }
+        
+        nameInputs.forEach(input => {
+            input.addEventListener('blur', () => validateInput(input, 'blur'));
+            input.form?.addEventListener('submit', (e) => {
+                if (!validateInput(input, 'submit')) {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        // Валидация формы уведомления о неисправности
+        const faultForm = document.getElementById('faultNotificationModal');
+        if (faultForm) {
+            faultForm.addEventListener('submit', function(e) {
+                let isValid = true;
+                
+                if (!validateInput(dateInput, 'submit')) isValid = false;
+                if (!validateInput(descriptionInput, 'submit')) isValid = false;
+                
+                if (!isValid) e.preventDefault();
+            });
+        }
+    });
+</script>
+</body>
+</html>

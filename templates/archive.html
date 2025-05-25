@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказы</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Основной контейнер -->
+<div class="main-container">
+    <div class="header mb-3">
+        <h1>Текущие заказы</h1>
+    </div>
+
+    <!-- Таблица заказов -->
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Дата создания</th>
+                <th>Дата закрытия</th>
+                <th>Заказчик</th>
+                <th>Информация по доставке</th>
+                <th>Оператор</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr data-bs-toggle="selection" data-order-id="{{ order.id }}">
+                <td>{{ order.id }}</td>
+                <td>{{ order.open_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>{{ order.close_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>{{ order.customer }}</td>
+                <td>{{ order.delivery_info }}</td>
+                <td>{{ order.operator.name or '-' }}</td>
+
+                <td style="display: none">{{ order.get_product_string() }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Кнопки действий -->
+    <div class="buttons-container">
+        <button class="action-btn btn" id="viewOrderBtn" disabled>Просмотр заказа</button>
+        <button class="action-btn btn" id="deleteOrderBtn" disabled>Удалить заказ</button>
+    </div>
+
+    <!-- Кнопка закрытия -->
+    <div class="close-btn-container">
+        <a href="{{ url_for('home') }}" class="btn action-btn">Закрыть</a>
+    </div>
+</div>
+
+<!-- Модальное окно просмотра заказа -->
+<div class="modal fade" id="viewOrderModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Просмотр заказа</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong>№:</strong> <span id="view-order-id"></span></div>
+        <div class="mb-2"><strong>Дата создания:</strong> <span id="view-order-open-date"></span></div>
+        <div class="mb-2"><strong>Дата закрытия:</strong> <span id="view-order-close-date"></span></div>
+        <div class="mb-2"><strong>Товары:</strong> <div id="view-order-products" class="border rounded p-2"></div></div>
+        <div class="mb-2"><strong>Заказчик:</strong> <span id="view-order-customer"></span></div>
+        <div class="mb-2"><strong>Информация по доставке:</strong> <span id="view-order-delivery"></span></div>
+        <div class="mb-2"><strong>Оператор:</strong> <span id="view-order-operator"></span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удалить заказ</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить заказ № "<strong id="modalId"></strong>" ?</p>
+            </div>
+            <div class="modal-footer">
+                <form method="POST" action="/order/delete">
+                    <input type="hidden" name="order_id" id="delete-order-id">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="submit" class="btn btn-primary">Удалить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+
+<!-- JavaScript для работы с таблицей и формами -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // При выборе строки таблицы
+    document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+        row.addEventListener('click', function () {
+            // Снимаем выделение со всех строк
+            document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(r => r.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('viewOrderBtn').disabled = false;
+            document.getElementById('deleteOrderBtn').disabled = false;
+        });
+    });
+
+    const viewOrderBtn = document.getElementById("viewOrderBtn");
+    const viewOrderModal = new bootstrap.Modal(document.getElementById("viewOrderModal"));
+    const deleteOrderBtn = document.getElementById("deleteOrderBtn");
+    const confirmDeleteModal = new bootstrap.Modal(document.getElementById("confirmDeleteModal"));
+
+    viewOrderBtn.addEventListener("click", function () {
+        const selectedRow = document.querySelector("tr.selected");
+        if (!selectedRow) return;
+
+        // Заполняем поля
+        document.getElementById("view-order-id").innerText = selectedRow.dataset.orderId;
+        document.getElementById("view-order-open-date").innerText = selectedRow.cells[1].textContent;
+        document.getElementById("view-order-close-date").innerText = selectedRow.cells[2].textContent;
+        document.getElementById("view-order-products").innerText = selectedRow.cells[6].textContent;
+        document.getElementById("view-order-customer").innerText = selectedRow.cells[3].textContent;
+        document.getElementById("view-order-delivery").innerText = selectedRow.cells[4].textContent || "";
+        document.getElementById("view-order-operator").innerText = selectedRow.cells[5].textContent || "";
+        viewOrderModal.show();
+    });
+
+    deleteOrderBtn.addEventListener("click", function () {
+        const selectedRow = document.querySelector("tr.selected");
+        if (!selectedRow) return;
+
+        const orderId = selectedRow.dataset.orderId;
+        document.getElementById('modalId').textContent = orderId;
+        document.getElementById('delete-order-id').value = orderId;
+
+        confirmDeleteModal.show();
+    });
+});
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Список ID всех кнопок действий
+        const actionButtons = [
+            "editOrderBtn",
+            "deleteOrderBtn",
+            "viewOrderBtn",
+            // Добавьте остальные кнопки по аналогии
+            "changePasswordBtn",
+            "deleteUserBtn",
+            "editEquipmentBtn",
+            "deleteEquipmentBtn",
+            "faultNotificationBtn"
+        ];
+
+        // Отключаем все кнопки действий при загрузке страницы
+        actionButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.disabled = true;
+        });
+
+        // Также можно убедиться, что ни одна строка не выбрана
+        document.querySelectorAll('tr[data-bs-toggle="selection"]').forEach(row => {
+            row.classList.remove('selected');
+        });
+    });
+</script>
+</body>
+</html>
